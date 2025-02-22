@@ -46,7 +46,7 @@ function handleFileSelect(e) {
 
 function handleFiles(files) {
     if (files.length === 0) return;
-    
+
     const file = files[0];
     if (file.type !== 'application/pdf') {
         alert('Please upload a PDF file');
@@ -61,22 +61,28 @@ function uploadFile(file) {
     formData.append('cv', file);
 
     uploadStatus.classList.remove('d-none');
-    
+
     fetch('/upload_cv', {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
     .then(data => {
         if (data.success) {
+            // Use window.location.href for redirection
             window.location.href = '/chat';
         } else {
-            alert(data.error || 'Error uploading file');
+            throw new Error(data.error || 'Error uploading file');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('Error uploading file');
+        alert(error.message || 'Error uploading file');
     })
     .finally(() => {
         uploadStatus.classList.add('d-none');
@@ -136,7 +142,7 @@ function addMessage(text, type) {
     messageDiv.classList.add('message');
     messageDiv.classList.add(`${type}-message`);
     messageDiv.textContent = text;
-    
+
     chatMessages.appendChild(messageDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }

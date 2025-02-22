@@ -1,6 +1,7 @@
 import os
 import logging
 from flask import Flask, render_template, request, jsonify, session
+from flask_session import Session
 from werkzeug.utils import secure_filename
 from pdf_processor import extract_text_from_pdf
 from llm_client import get_llm_response
@@ -13,8 +14,18 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")  # Ensure secret key is set
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = '/tmp'
-app.config['SESSION_TYPE'] = 'filesystem'  # Enable server-side session
-app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes session lifetime
+
+# Session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config['SESSION_FILE_DIR'] = '/tmp/flask_session'
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes
+
+# Ensure the session directory exists
+os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+
+# Initialize Flask-Session
+Session(app)
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
@@ -23,7 +34,7 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
-    logger.debug("Session contents: %s", dict(session))  # Debug session contents
+    logger.debug("Session contents: %s", dict(session))
     return render_template('index.html')
 
 @app.route('/upload_cv', methods=['POST'])
@@ -53,8 +64,7 @@ def upload_cv():
         cv_text = extract_text_from_pdf(filepath)
         logger.debug(f"Extracted text length: {len(cv_text)}")
 
-        # Make the session permanent and store CV text
-        session.permanent = True
+        # Store CV text in session
         session['cv_context'] = cv_text
         logger.debug("CV text stored in session. Session contents: %s", dict(session))
 

@@ -10,9 +10,11 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")
+app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")  # Ensure secret key is set
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['UPLOAD_FOLDER'] = '/tmp'
+app.config['SESSION_TYPE'] = 'filesystem'  # Enable server-side session
+app.config['PERMANENT_SESSION_LIFETIME'] = 1800  # 30 minutes session lifetime
 
 ALLOWED_EXTENSIONS = {'pdf'}
 
@@ -21,6 +23,7 @@ def allowed_file(filename):
 
 @app.route('/')
 def index():
+    logger.debug("Session contents: %s", dict(session))  # Debug session contents
     return render_template('index.html')
 
 @app.route('/upload_cv', methods=['POST'])
@@ -50,10 +53,13 @@ def upload_cv():
         cv_text = extract_text_from_pdf(filepath)
         logger.debug(f"Extracted text length: {len(cv_text)}")
 
+        # Make the session permanent and store CV text
+        session.permanent = True
         session['cv_context'] = cv_text
-        logger.debug("CV text stored in session")
+        logger.debug("CV text stored in session. Session contents: %s", dict(session))
 
-        os.remove(filepath)  # Clean up the uploaded file
+        # Clean up
+        os.remove(filepath)
         logger.debug("Temporary file removed")
 
         return jsonify({'success': True, 'message': 'CV processed successfully'})
@@ -61,14 +67,16 @@ def upload_cv():
     except Exception as e:
         logger.error(f"Error processing CV: {str(e)}")
         logger.exception("Full traceback:")
-        if os.path.exists(filepath):
+        if 'filepath' in locals() and os.path.exists(filepath):
             os.remove(filepath)
             logger.debug("Cleaned up temporary file after error")
         return jsonify({'error': 'Error processing CV'}), 500
 
 @app.route('/chat')
 def chat():
+    logger.debug("Chat route accessed. Session contents: %s", dict(session))
     if 'cv_context' not in session:
+        logger.warning("No CV context found in session")
         return render_template('index.html', error="Please upload a CV first")
     return render_template('chat.html')
 
@@ -78,6 +86,9 @@ def send_message():
         data = request.json
         user_message = data.get('message', '')
         cv_context = session.get('cv_context', '')
+
+        logger.debug(f"Message received: {user_message}")
+        logger.debug(f"CV context length: {len(cv_context)}")
 
         if not user_message:
             return jsonify({'error': 'Empty message'}), 400

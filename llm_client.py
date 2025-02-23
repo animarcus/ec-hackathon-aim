@@ -103,15 +103,20 @@ class CVAnalyzer:
                 },
                 {
                     "role": "user",
-                    "content": f"""[BACKGROUND FOR ADAPTATION - DO NOT REFERENCE IN RESPONSE]
+                    "content": f"""[BACKGROUND INFORMATION ABOUT THE USER FOR ADAPTATION - DO NOT REFERENCE IN RESPONSE]
+    ```
     {' '.join(background_chunks)}
+    ```
+    
     
     [DOCUMENTATION CONTENT]
+    ```
     {' '.join(doc_chunks)}
+    ```
     
     User question: {user_message}
     
-    Please provide a response based only on the documentation content, adapted to the appropriate technical level."""
+    Please provide a response based only on the documentation content"""
                 }
             ]
 

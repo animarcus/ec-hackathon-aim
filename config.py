@@ -1,6 +1,6 @@
 # config.py
 # Model configurations
-DEFAULT_MODEL = 'hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M'#'qwen2.5:3b'
+DEFAULT_MODEL = 'hf.co/bartowski/Qwen2.5-7B-Instruct-GGUF:Q5_K_M' # 'hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M' #'qwen2.5:3b'
 DEFAULT_EMBEDDER = 'nomic-embed-text:latest'
 
 # System messages
@@ -13,4 +13,4 @@ When responding:
 - Do not reference or mention any personal information or background
 - If information is not in the documentation, simply state that it's not covered in the available documentation
 
-Focus on explaining the documentation content in a way that matches the user's technical expertise level."""
+Focus on explaining the documentation content."""

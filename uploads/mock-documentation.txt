@@ -1,0 +1,183 @@
+AIM Project Documentation
+========================
+
+Overview
+--------
+AIM (AI Mentor) is a Flask-based web application that provides contextual responses to questions using RAG (Retrieval Augmented Generation) with Ollama integration. The system processes documents and uses them as context for generating responses.
+
+Architecture
+-----------
+The application follows a modular architecture:
+- Web Layer: Flask application handling HTTP requests
+- Processing Layer: Document processing and chunking
+- Storage Layer: Session-based document storage
+- LLM Layer: Integration with Ollama for embeddings and responses
+
+Setup Instructions
+----------------
+1. Environment Setup:
+   ```bash
+   # Create virtual environment
+   python -m venv venv
+   source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+   
+   # Install dependencies
+   poetry install
+   ```
+
+2. Ollama Setup:
+   ```bash
+   # Install Ollama
+   curl https://ollama.ai/install.sh | sh
+   
+   # Pull required models
+   ollama pull nomic-embed-text:latest
+   ollama pull hf.co/bartowski/Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+   ```
+
+3. Configuration:
+   Create a .env file with:
+   ```
+   FLASK_ENV=development
+   OLLAMA_API_URL=http://localhost:11434/api/generate
+   ```
+
+API Endpoints
+------------
+1. File Upload (POST /upload_cv)
+   - Accepts PDF files
+   - Returns success/error response
+   - Creates session for subsequent interactions
+
+2. Chat Interface (POST /send_message)
+   - Requires active session
+   - Uses RAG for contextual responses
+   - Returns LLM-generated response
+
+3. Session Management
+   - Sessions store processed documents
+   - Automatic cleanup after 24 hours
+   - UUID-based session identification
+
+Document Processing
+------------------
+The system processes documents in several stages:
+1. Text Extraction
+   - Supports PDF and TXT files
+   - Chunks text into manageable segments
+   - Preserves document structure
+
+2. Embedding Generation
+   - Uses nomic-embed-text model
+   - 768-dimensional embeddings
+   - Cosine similarity for retrieval
+
+3. Storage
+   - JSON-based persistent storage
+   - Session-scoped document retention
+   - Efficient chunk retrieval
+
+RAG Implementation
+-----------------
+The system implements RAG with the following features:
+1. Semantic Search
+   - Top-k retrieval (default k=3)
+   - Cosine similarity scoring
+   - Fallback mechanisms for errors
+
+2. Context Assembly
+   - Dynamic context window
+   - Relevance-based chunk selection
+   - Background-aware processing
+
+3. Response Generation
+   - Adaptive response complexity
+   - Context-aware answers
+   - Stream support for real-time responses
+
+Configuration Options
+-------------------
+Key configuration parameters:
+1. Memory Limits
+   - MAX_CONTENT_LENGTH: 16MB
+   - Default chunk size: 1000 characters
+   - Maximum chunks per request: 10
+
+2. Model Settings
+   - Embedding model: nomic-embed-text:latest
+   - LLM model: Meta-Llama-3.1-8B-Instruct-GGUF:Q4_K_M
+   - Context window: 4096 tokens
+
+3. Security
+   - CORS settings: Local development only
+   - File validation: Strict MIME type checking
+   - Session encryption: AES-256-GCM
+
+Error Handling
+-------------
+The system implements comprehensive error handling:
+1. File Processing
+   - Invalid file types
+   - Corrupt documents
+   - Processing timeouts
+
+2. LLM Integration
+   - Connection failures
+   - Model errors
+   - Invalid responses
+
+3. Storage
+   - Session expiration
+   - Storage corruption
+   - Concurrent access
+
+Development Guidelines
+--------------------
+1. Code Structure
+   - Modular design
+   - Clean separation of concerns
+   - Extensive logging
+
+2. Testing
+   - Unit tests for core components
+   - Integration tests for API endpoints
+   - Performance benchmarks
+
+3. Deployment
+   - Docker support
+   - Environment-based configuration
+   - Health monitoring
+
+Performance Considerations
+------------------------
+1. Resource Usage
+   - Memory: ~2GB baseline
+   - CPU: 2-4 cores recommended
+   - Storage: 1GB minimum
+
+2. Scalability
+   - Stateless design
+   - Session persistence
+   - Horizontal scaling support
+
+3. Optimization
+   - Caching strategy
+   - Batch processing
+   - Resource pooling
+
+Security Notes
+-------------
+1. Authentication
+   - Session-based security
+   - CSRF protection
+   - Rate limiting
+
+2. Data Protection
+   - Temporary file cleanup
+   - Secure session storage
+   - Input sanitization
+
+3. Compliance
+   - GDPR considerations
+   - Data retention policies
+   - Audit logging
